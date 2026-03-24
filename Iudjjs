@@ -1,0 +1,95 @@
+-- UI + เลื่อนลื่น (มือถือ/คอม) + Auto Spam
+
+local player = game.Players.LocalPlayer
+local rs = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+
+local remote = rs:WaitForChild("SpawnLuckyBlock")
+local running = false
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- กล่องหลัก
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,260,0,100)
+frame.Position = UDim2.new(0.5,-130,0.5,-50)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Parent = gui
+
+-- ปุ่ม
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0,60,1,0)
+btn.Position = UDim2.new(1,-60,0,0)
+btn.Text = "OFF"
+btn.TextScaled = true
+btn.Parent = frame
+
+-- ข้อความ
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1,-60,1,0)
+label.BackgroundTransparency = 1
+label.Text = "Lucky Block"
+label.TextScaled = true
+label.TextColor3 = Color3.fromRGB(255,255,255)
+label.Parent = frame
+
+-- เปิด/ปิด
+btn.MouseButton1Click:Connect(function()
+    running = not running
+    btn.Text = running and "ON" or "OFF"
+end)
+
+-- ยิงรัว
+task.spawn(function()
+    while true do
+        if running then
+            pcall(function()
+                remote:FireServer()
+            end)
+        end
+        task.wait(0.1)
+    end
+end)
+
+-- ===== เลื่อน UI (รองรับมือถือ + เมาส์) =====
+local dragging = false
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseMovement then
+        if dragging then
+            update(input)
+        end
+    end
+end)
